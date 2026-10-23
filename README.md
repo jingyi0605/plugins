@@ -23,6 +23,7 @@ subscription and makes its requests. The packages work in OpenCode and in
 | [minimax](packages/minimax) | MiniMax Code (China): account credits and M Plan, with MiniMax Code's device sign-in | `minimax-code` |
 | [minimax](packages/minimax) | MiniMax Code (international): account credits and M Plan, with MiniMax Code's device sign-in | `minimax-code-global` |
 | [mimo](packages/mimo) | Xiaomi MiMo, with a Xiaomi account | `mimo-app` |
+| [newapi](packages/newapi) | New API / One API relay sites: a base URL and API key per instance, many instances pooling one model family, with wallet balance and subscription usage | `newapi` |
 | [nous](packages/nous) | Nous Portal models, with Nous Portal's device sign-in | `nous-portal` |
 | [opendesign](packages/opendesign) | Open Design Cloud (open-design.ai), with the Open Design CLI's device sign-in | `opendesign` |
 | [qoder](packages/qoder) | Qoder subscription (qoder.com), with Qoder's device sign-in | `qoder` |
