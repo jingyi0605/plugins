@@ -247,6 +247,40 @@ describe("named model-combination providers (site without url)", () => {
   })
 })
 
+describe("provider name and config", () => {
+  it("names the provider row (no fallback to the id)", async () => {
+    const h = await NewapiPlugin(store())
+    const cfg = {}
+    await h.config(cfg)
+    assert.equal(cfg.provider.newapi.name, "New API")
+    assert.equal(cfg.provider.newapi.npm, "@ai-sdk/openai-compatible")
+    // community check: a config carries a non-empty models map
+    assert.ok(Object.keys(cfg.provider.newapi.models).length)
+  })
+
+  it("a site's name names its provider row", async () => {
+    const h = await NewapiSite1(store(), { sites: [{ id: "claude-pool", name: "Claude Pool", url: base }] })
+    const cfg = {}
+    await h.config(cfg)
+    assert.equal(cfg.provider["claude-pool"].name, "Claude Pool")
+  })
+
+  it("keeps a real model already listed and drops the placeholder", async () => {
+    const h = await NewapiPlugin(store())
+    const real = { "claude-3-5-sonnet": { id: "claude-3-5-sonnet", name: "claude-3-5-sonnet" } }
+    const cfg = { provider: { newapi: { models: real } } }
+    await h.config(cfg)
+    assert.deepEqual(Object.keys(cfg.provider.newapi.models), ["claude-3-5-sonnet"])
+  })
+
+  it("the placeholder never reaches the model list", async () => {
+    const h = await NewapiPlugin(store())
+    const got = await h.provider.models({ models: { "newapi-placeholder": { id: "newapi-placeholder" } } }, { auth: { type: "api", key: RELAY_KEY, metadata: { baseURL: base } } })
+    assert.ok(!("newapi-placeholder" in got))
+    assert.deepEqual(Object.keys(got).sort(), ["claude-3-5-sonnet", "deepseek-chat", "gpt-4o"])
+  })
+})
+
 describe("account model", () => {
   it("one account = baseURL + apiKey; access token only adds balance", async () => {
     // the relay key serves; the access token is separate from it

@@ -549,10 +549,38 @@ const REGION_PROMPT = (site) =>
 // and optionally a system access token that only reads the dashboard so the
 // balance / subscription can be shown. Several such instances pool under the
 // one provider and jointly serve the same models.
+// PLACEHOLDER is the model id config offers before an account has listed any,
+// so the map is never empty; provider.models drops it as soon as it has real
+// models to give.
+const PLACEHOLDER = "newapi-placeholder"
+
+function placeholderModel(base) {
+  return { id: PLACEHOLDER, name: PLACEHOLDER, api: { npm: CHAT, url: base ? base + "/v1" : "https://example.com/v1" } }
+}
+
 function hooks(client, id, site) {
   const baseOf = (auth) => site?.base ?? root(auth?.metadata?.baseURL)
 
   return {
+    // The name the provider row shows. Without this magpie falls back to the
+    // provider id, and the row cannot be renamed in the app.
+    //
+    // magpie's community check also requires a config to carry `npm` and a
+    // non-empty `models`, while this plugin's models come from the accounts.
+    // So the map repeats whatever the last account listed, and a single
+    // placeholder stands in until one has: provider.models then replaces it
+    // with the real list on the next refresh.
+    async config(config) {
+      config.provider ??= {}
+      const was = config.provider[id] ?? {}
+      const kept = Object.fromEntries(Object.entries(was.models ?? {}).filter(([k]) => k !== PLACEHOLDER))
+      config.provider[id] = {
+        ...was,
+        name: site?.name ?? "New API",
+        npm: was.npm || CHAT,
+        models: Object.keys(kept).length ? kept : { [PLACEHOLDER]: placeholderModel(baseOf) },
+      }
+    },
     auth: {
       provider: id,
       async loader(getAuth) {
@@ -663,6 +691,7 @@ function hooks(client, id, site) {
           if (!listed || !Object.keys(listed).length) return provider.models
           const known = await knownModels()
           const out = {}
+          delete provider?.models?.[PLACEHOLDER]
           for (const m of Object.values(listed)) {
             if (!isChatModel(m)) continue
             if (!modelAllowed(m.id, site?.models, site?.exclude)) continue
